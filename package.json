@@ -2,7 +2,7 @@
   "name": "historical-object",
   "version": "1.0.0",
   "description": "",
-  "main": "HistoricalObject.js",
+  "main": "src/HistoricalObject.js",
   "scripts": {
     "test": "jest",
     "autotest": "watch 'npm test' __tests__ src --wait 5"

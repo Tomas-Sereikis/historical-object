@@ -1,5 +1,6 @@
 'use strict';
 
+var cloneDeep = require('lodash/lang/cloneDeep');
 var isObject = require('lodash/lang/isObject');
 var isArray = require('lodash/lang/isArray');
 var isFunction = require('lodash/lang/isFunction');
@@ -45,6 +46,7 @@ function defineProperties (parent, inherited, object) {
 
 /**
  * @param {Object} object
+ * @constructor
  */
 function HistoricalObject (object) {
   // make sure that constructor is a object
@@ -52,7 +54,7 @@ function HistoricalObject (object) {
   assert.ok(isObject(object), 'HistoricalObject constructor must be an Object!');
   // history state object
   historyWeakMap.set(this, []);
-  defineProperties(this, this, object);
+  defineProperties(this, this, cloneDeep(object));
 }
 
 HistoricalObject.prototype = {
