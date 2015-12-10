@@ -1,3 +1,4 @@
+/*global jest, describe, it, expect*/
 'use strict';
 
 jest.autoMockOff();
@@ -69,5 +70,22 @@ describe('HistoricalObject', function () {
     historicalObject.revert();
     expect(historicalObject.a.length).toBe(2);
     expect(historicalObject.a).toEqual([1, 2]);
+  });
+
+  it('should revert changes from transaction', function () {
+    var historicalObject = new HistoricalObject({a: {a: 1, b: 2}});
+    expect(historicalObject.a.a).toBe(1);
+    expect(historicalObject.a.b).toBe(2);
+    historicalObject.transaction();
+    historicalObject.a.a = 2;
+    historicalObject.a.b = 1;
+    expect(historicalObject.a.a).toBe(2);
+    expect(historicalObject.a.b).toBe(1);
+    historicalObject.commit();
+    expect(historicalObject.a.a).toBe(2);
+    expect(historicalObject.a.b).toBe(1);
+    historicalObject.revert();
+    expect(historicalObject.a.a).toBe(1);
+    expect(historicalObject.a.b).toBe(2);
   });
 });

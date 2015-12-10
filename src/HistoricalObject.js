@@ -7,11 +7,8 @@ var assert = require('assert');
 
 module.exports = HistoricalObject;
 
-/**
- * this will store history array
- * @type {WeakMap}
- */
-var weakMap = new WeakMap();
+var historyWeakMap = new WeakMap();
+var transactionsWeakMap = new WeakMap();
 
 /**
  * @param parent
@@ -19,7 +16,6 @@ var weakMap = new WeakMap();
  * @param object
  */
 function defineProperties (parent, inherited, object) {
-  console.log(Object.keys(object));
   Object.keys(object).forEach(function (key) {
     if (isObject(object[key])) {
       // make sure that we are creating right type of object
@@ -35,8 +31,12 @@ function defineProperties (parent, inherited, object) {
       },
       set(newValue) {
         var oldValue = object[key];
-        // save revert callback to history object
-        weakMap.get(parent).push([() => object[key] = oldValue]);
+        var transaction = transactionsWeakMap.get(parent);
+        if (isArray(transaction)) {
+          transaction.push(() => object[key] = oldValue);
+        } else {
+          historyWeakMap.get(parent).push([() => object[key] = oldValue]);
+        }
         object[key] = newValue;
       }
     });
@@ -51,7 +51,7 @@ function HistoricalObject (object) {
   assert.ok(this instanceof HistoricalObject, 'HistoricalObject must be called with new!');
   assert.ok(isObject(object), 'HistoricalObject constructor must be an Object!');
   // history state object
-  weakMap.set(this, []);
+  historyWeakMap.set(this, []);
   defineProperties(this, this, object);
 }
 
@@ -60,9 +60,32 @@ HistoricalObject.prototype = {
    * revert object last change state
    */
   revert() {
-    var previous = weakMap.get(this).pop();
+    if (isArray(transactionsWeakMap.get(this))) {
+      throw new Error('Can not revert while in transaction mode!');
+    }
+    var previous = historyWeakMap.get(this).pop();
     if (isArray(previous)) {
       previous.forEach(callback => callback());
+    }
+  },
+
+  /**
+   * start changes transaction
+   */
+  transaction() {
+    if (!isArray(transactionsWeakMap.get(this))) {
+      transactionsWeakMap.set(this, []);
+    }
+  },
+
+  /**
+   * commit transaction changes
+   */
+  commit() {
+    var changes = transactionsWeakMap.get(this);
+    if (isArray(changes)) {
+      historyWeakMap.get(this).push(changes);
+      transactionsWeakMap.delete(this);
     }
   }
 };
